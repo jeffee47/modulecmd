@@ -74,6 +74,9 @@ class Modulecmd:
     except Exception,e:
       return []
   
+  def show(self,mod):
+    return self._modulecmd("%s python show %s" % (self.modulecmd,mod))
+  
   def unuse(self,modulepath):
     if type(modulepath) is type(""):
       tmp = modulepath
@@ -122,6 +125,9 @@ class Modulecmd:
     for m in mods:
       self._modulecmd("""%s python load %s""" % (self.modulecmd,m))
 
+  def add(self,*args,**kwargs):
+    return self.load(*args,**kwargs)
+
   def switch(self,m1,m2):
     self._modulecmd("""%s python switch %s %s""" % (self.modulecmd,m1,m2))
 
@@ -132,6 +138,15 @@ class Modulecmd:
     for m in mods:
       self._modulecmd("""%s python unload %s""" % (self.modulecmd,m))
      
+  def rm(self,*args,**kwargs):
+    return self.unload(*args,**kwargs)
+ 
+  def swap(self,*args,**kwargs):
+    return self.switch(*args,**kwargs)
+
+  def display(self,*args,**kwargs):
+    return self.show(*args,**kwargs)
+
   def _runsystem(self,cmd):
     nosubprocess = False
     try:

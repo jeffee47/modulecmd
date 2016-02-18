@@ -10,6 +10,7 @@ setup(
 	version='1.0',
 	description='modular wrapper support for environment modules',
 	author='Jeff Kiser',
+	url='https://github.com/jeffee47/modulecmd',
 	author_email='jkiser@synopsys.com',
 	py_modules=["modulecmd"],
 	keywords=["environment","modules","modulecmd",],
