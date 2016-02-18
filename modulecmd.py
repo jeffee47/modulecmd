@@ -1,12 +1,6 @@
 #!/usr/bin/env python
-
-import os
-import sys
-import getopt
-import traceback
-
-class Modulecmd:
-  """
+  
+"""
 	Python wrapper to system environment modules.  Basic functions
 	include:
 		load,unload,purge,list,switch,use,unuse
@@ -24,8 +18,14 @@ class Modulecmd:
 		m.switch("mod3","mod3/dev")
 		m.list() # shows currently loaded modules
 		m.purge() # unloads everything
-  """
-		
+"""
+
+import os
+import sys
+import getopt
+import traceback
+
+class Modulecmd:
 
   def __init__(self,modulecmd=None,modulepath=[],verbose=False,modulehome="/global/etc/modules/default"):
     """
@@ -69,15 +69,49 @@ class Modulecmd:
       print "Using modulecmd %s" % self.modulecmd
 
   def modulepaths(self):
+    """
+	Usage:
+		m.modulepaths()
+	Returns:
+		list of paths
+
+	Returns a list of directories that will be traversed to look for modules.  
+	The environment variable $MODULEPATH is used to find this.  This can
+	be altered on the fly either by:
+		1) Altering $MODULEPATH environment variable (not recommended)
+		2) using the use/unuse methods of this class (recommended)
+    """
     try:
       return os.environ.get('MODULEPATH',"").split(os.pathsep)
     except Exception,e:
       return []
   
   def show(self,mod):
+    """
+	Usage:
+		m.show(<module>)
+	Returns:
+		String with information about module.  Doesn't affect environment, directly.
+
+	Shows information about a given module and the setup that would be taken
+	if a load is called on it.
+    """
     return self._modulecmd("%s python show %s" % (self.modulecmd,mod))
   
   def unuse(self,modulepath):
+    """
+	Usage:
+		m.unuse(<path>)
+		m.unuse([<path1>,<path2>,etc.])
+	Returns:
+		None
+	
+	Alters the $MODULEPATH environment variable by removing paths.  To remove all paths
+	you can say:
+
+		m.unuse(m.modulepaths())
+
+    """
     if type(modulepath) is type(""):
       tmp = modulepath
       modulepath = [tmp]
@@ -87,6 +121,15 @@ class Modulecmd:
       self._modulecmd("%s python unuse %s" % (self.modulecmd,modpath))
     
   def use(self,modulepath):
+    """
+	Usage:
+		m.use(<path>)
+		m.use([<path1>,<path2>,etc.])
+	Returns:
+		None
+	
+	Alters the $MODULEPATH environment variable by adding paths.
+    """
     if type(modulepath) is type(""):
       tmp = modulepath
       modulepath = [tmp]
@@ -110,15 +153,40 @@ class Modulecmd:
     return None
 
   def list(self):
+    """
+	Usage:
+		m.list()
+	Returns:
+		list of all environment modules currently loaded
+    """
     try:
       return os.environ['LOADEDMODULES'].split(os.pathsep)
     except Exception,e:
       return []
 
   def purge(self):
+    """
+	Usage: 
+		m.purge()
+	Returns:
+		None
+
+	Used to unload ALL modules from the current environment
+    """
     self._modulecmd("%s python purge" % self.modulecmd)
 
   def load(self,mods):
+    """
+	Usage:
+		m.load(<module>)
+		m.load([<mod1>,<mod2>,etc.])
+	Returns:
+		None
+	
+	Used to add module(s) to current environment.  Input arguments can be either:
+		1) String (single module add)
+		2) Tuple/List (multiple module add)
+    """
     if type(mods) is type(""):
       tmpmod = mods
       mods = [tmpmod,]
@@ -126,12 +194,34 @@ class Modulecmd:
       self._modulecmd("""%s python load %s""" % (self.modulecmd,m))
 
   def add(self,*args,**kwargs):
+    """
+	Alias to m.load method
+    """
     return self.load(*args,**kwargs)
 
   def switch(self,m1,m2):
+    """
+	Usage:
+		m.switch(<mod1>,<mod1a>)
+	Returns:
+		None
+
+	Switches the version of a particular module
+    """
     self._modulecmd("""%s python switch %s %s""" % (self.modulecmd,m1,m2))
 
   def unload(self,mods):
+    """
+	Usage:
+		m.unload(<module>)
+		m.unload([<mod1>,<mod2>,etc.])
+	Returns:
+		None
+	
+	Used to remove module(s) from current environment.  Input arguments can be either:
+		1) String (single module add)
+		2) Tuple/List (multiple module add)
+    """
     if type(mods) is type(""):
       tmpmod = mods
       mods = [tmpmod,]
@@ -139,12 +229,21 @@ class Modulecmd:
       self._modulecmd("""%s python unload %s""" % (self.modulecmd,m))
      
   def rm(self,*args,**kwargs):
+    """
+	Alias for m.unload method
+    """
     return self.unload(*args,**kwargs)
  
   def swap(self,*args,**kwargs):
+    """
+	Alias for m.switch method
+    """
     return self.switch(*args,**kwargs)
 
   def display(self,*args,**kwargs):
+    """
+	Alias for m.show method
+    """
     return self.show(*args,**kwargs)
 
   def _runsystem(self,cmd):
