@@ -7,7 +7,7 @@ if sys.version_info >= (3,0):
 
 setup(
 	name='modulecmd',
-	version='1.0',
+	version='1.0.1',
 	description='modular wrapper support for environment modules',
 	author='Jeff Kiser',
 	url='https://github.com/jeffee47/modulecmd',
