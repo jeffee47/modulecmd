@@ -1,6 +1,16 @@
 import setuptools
 import sys
 import unittest
+import codecs
+
+### workaround addition for bdist_wininst to work on pypi
+try:
+    codecs.lookup('mbcs')
+except LookupError:
+    ascii = codecs.lookup('ascii')
+    func = lambda name, enc=ascii: {True:enc}.get(name=='mbcs')
+    codecs.register(func)
+### end of workaround addition
 
 extra = {}
 if sys.version_info >= (3,0):
@@ -15,7 +25,7 @@ def run_test_suite():
 def main():
     setuptools.setup(
 	name='modulecmd',
-	version='1.1.0',
+	version='1.1.2',
 	description='modular wrapper support for environment modules',
 	author='Jeff Kiser',
 	url='https://github.com/jeffee47/modulecmd',
