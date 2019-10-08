@@ -25,7 +25,7 @@ def run_test_suite():
 def main():
     setuptools.setup(
 	name='modulecmd',
-	version='1.1.2',
+	version='1.1.3',
 	description='modular wrapper support for environment modules',
 	author='Jeff Kiser',
 	url='https://github.com/jeffee47/modulecmd',

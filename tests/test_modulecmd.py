@@ -39,6 +39,7 @@ class TestModulecmdFunctionality(unittest.TestCase):
         self.module_dir = None
         self.topmod = "mcmdtest"
         self.path_add = '/not/real/path'
+        self.version_files = ["1", "2", "3.10.3a"]
         self.modules = []
         self.setup_ok = False
         self.mobj = None
@@ -47,7 +48,7 @@ class TestModulecmdFunctionality(unittest.TestCase):
         import tempfile
         import traceback
 
-        self.module_dir = tempfile.mkdtemp()
+        self.module_dir = tempfile.mkdtemp(prefix='tmpmcmd')
         modfile_contents = """#%%Module1.0#####################################################################
 set list [ split $ModulesCurrentModulefile / ]
 set global(install,abbr_app_name) [ lindex $list end-1 ]
@@ -56,7 +57,9 @@ switch -regex $global(install,version_number) {
 	{^1} {
 		prepend-path {__TEST_MODULECMD_VERSION__} "1"
 	} {^\d+} {
-		prepend-path {__TEST_MODULECMD_VERSION__} "[expr { int($global(install,version_number)) }]"
+		if { [ regexp {(\d+)} $global(install,version_number) match s1 ] } {
+			prepend-path {__TEST_MODULECMD_VERSION__} "[expr { int($s1) }]"
+		}
 	} default {
 		puts stderr "You must specify a numeric version!"
 	}
@@ -67,11 +70,10 @@ append-path PATH {%s}""" % (self.path_add)
         vfile_contents = '''#%Module1.0
 set ModulesVersion "1"'''
 
-        version_files = ["1", "2", "3.1"]
         tmpdir = os.path.join(self.module_dir, self.topmod)
         try:
             os.makedirs(tmpdir)
-            for vfile in version_files:
+            for vfile in self.version_files:
                 with open(os.path.join(tmpdir, vfile), "w") as vfh:
                     vfh.write(modfile_contents)
                     self.modules.append("%s/%s" % (self.topmod, vfile))
@@ -97,15 +99,42 @@ set ModulesVersion "1"'''
     def test_setup(self):
         self.assertEqual(self.setup_ok,True,"Could not setup properly")
 
-    def test_use(self):
+    def test_use_unuse(self):
         firstpath = os.environ['MODULEPATH'].split(os.pathsep)[0]
         self.assertEqual(
             firstpath,
             self.module_dir,
             "module use is failing to update environment")
+        self.mobj.unuse(self.module_dir)
+        modpaths = os.environ.get('MODULEPATH','').split(os.pathsep)
+        self.assertTrue(
+            self.module_dir not in modpaths,
+            "%s did not properly remove itself with unuse" % self.module_dir
+        )
+
+    def test_purge(self):
+        self.mobj.load(self.topmod)
+        self.assertTrue(
+            self.topmod in [os.path.dirname(x) for x in self.mobj.list()],
+            "Couldnot find %s in %s" % (self.topmod, str(self.mobj.list()))
+        )
+        self.mobj.purge()
+        self.assertFalse(
+            'LOADEDMODULES' in os.environ,
+            "LOADEDMODULES environment variable exists after purge"
+        )
+
+    def test_avail(self):
+        matches = self.mobj.avail(self.topmod)
+        self.assertTrue(matches , "No matches were found for module %s" % self.topmod)
+        self.assertEqual(len(matches) , len(self.version_files),
+            "Got a mismatch of available for %s (expected %d and got %d)" % (self.topmod, len(matches), len(self.version_files))
+        )
 
     def test_switch(self):
         import random
+        import re
+
         self.mobj.load(self.topmod)
 
         for x in range(0,10):
@@ -114,7 +143,7 @@ set ModulesVersion "1"'''
                                        len(self.modules) -1,
                                    )]
             self.mobj.switch(self.topmod,nextmod)
-            tmp_version = int(float(os.path.basename(nextmod)))
+            tmp_version = int(re.match(r'^(\d+)', os.path.basename(nextmod)).group(1))
             self.assertEqual(
                 tmp_version,
                 int(float(os.environ['__TEST_MODULECMD_VERSION__'])),
@@ -123,6 +152,7 @@ set ModulesVersion "1"'''
 
     def test_load_unload(self):
         import random
+        import re
         ### pick random submodule to load
         for x in range(0,10):
             nextmod = self.modules[random.randint(
@@ -130,7 +160,7 @@ set ModulesVersion "1"'''
                                        len(self.modules) -1,
                                    )]
             self.mobj.load(nextmod)
-            version = int(float(os.path.basename(nextmod)))
+            version = int(re.search(r'(\d+)',os.path.basename(nextmod)).group(1))
             self.assertEqual(
                 version, 
                 int(os.environ['__TEST_MODULECMD_VERSION__']),

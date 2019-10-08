@@ -2,7 +2,7 @@
 Python wrapper around environment module interface
 
 modulecmd enables direct use/integration of UNIX environment inside of python scripts.  It is similar, in spirit,
-to Perl's Env::Modulecmd CPAN module.  
+to the Perl Env::Modulecmd CPAN module.  
 
 In order to use it, effectively, you should already have environment modules (modulecmd) setup in your basic 
 shell environment.  Then, to take advantage of them from within a python script, just say:

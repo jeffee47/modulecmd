@@ -332,11 +332,54 @@ class Modulecmd:
                 pout = pout.decode('utf-8')
         return pout
 
+    def avail(self,pattern=str):
+        """
+		Implements the avail command by calling it through
+		modulecmd and massaging the output(s)
+
+		returns a list of tuples of the form:
+			[ (<modname>, <modfile fullpath>),]
+		The list returned will be in order of precedence (highest match first)
+        """	
+        import re
+
+        availmods = []
+        avail_out = self._modulecmd("""%s python avail %s""" % (self.modulecmd, pattern)).decode('utf-8')
+        if avail_out.strip() == '':
+            return availmods
+        alines =  [str(x) for x in avail_out.strip().splitlines()]
+        repo = None
+        top_insert = 0 # keep track of the head based on each time repo changes
+        for aline in alines:
+            if aline.strip() == '':
+                repo = None
+                continue
+            try:
+                repo = re.match(r'^-+\s*([^-]+)\s*-+\s*$', aline).group(1)
+                top_insert = len(availmods)
+                continue
+            except AttributeError:
+                pass 
+            if repo:
+                for tmpmod in aline.split():
+                    fullpath = os.path.join(repo, tmpmod)
+                    if tmpmod.lower().endswith("(default)"):
+                        tmpmod = re.sub(r'(?i)\(default\)$', '', tmpmod)
+                        availmods.insert(
+                            top_insert, (
+                                tmpmod,
+                                fullpath
+                            )
+                        )
+                    else:
+                        availmods.append((tmpmod, fullpath))
+        return availmods
+        
     def _modulecmd(self, cmd):
         out = None
         cmdtype = None
         cmd = str(cmd) # make sure type is valid
-        noout_cmds = ["list", "show", ]
+        noout_cmds = ["list", "show", "avail"]
         try:
             cmdtype = cmd.strip().split()[2]
         except IndexError:
